@@ -1,0 +1,26 @@
+version: 2.0
+jobs:
+  gradle/test:
+    docker:
+    - image: circleci/openjdk:10-jdk
+    environment:
+    - TERM: dumb
+    steps:
+    - checkout
+    - run:
+        name: Generate Cache Checksum
+        command: find . -name 'build.gradle' -exec cat {} + | shasum | awk '{print $1}' > /tmp/gradle_cache_seed
+    - restore_cache:
+        key: gradle-{{ checksum "/tmp/gradle_cache_seed" }}
+    - run:
+        name: Run Tests
+        command: ./gradlew test
+    - save_cache:
+        paths:
+        - ~/.gradle
+        key: gradle-{{ checksum "/tmp/gradle_cache_seed" }}
+workflows:
+  test:
+    jobs:
+    - gradle/test
+  version: 2
